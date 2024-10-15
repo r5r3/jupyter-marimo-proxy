@@ -55,8 +55,16 @@ def setup_marimoserver():
 		"""
 		construct the command to run marimo
 		"""
-		result = ['marimo', 'edit', '--port', '{port}', '--base-url', os.environ['JUPYTERHUB_SERVICE_PREFIX'] + 'marimo', '--token', '--token-password', token, '--headless', get_cwd_from_workspaces()]
-		logger.debug(f'Marimo: command: {result}')
+		# find the marimo executable
+		marimo_path = next((os.path.join(path, 'marimo') for path in os.environ.get('PATH', '').split(os.pathsep) if os.path.exists(os.path.join(path, 'marimo'))), None)
+		if not marimo_path:
+			raise Exception("Marimo not found in PATH")
+		result = [
+			'/bin/bash',
+			'-c',
+			f'cd \'{get_cwd_from_workspaces()}\' && {marimo_path} edit --skip-update-check --port {{port}} --base-url {os.environ["JUPYTERHUB_SERVICE_PREFIX"]}marimo --token --token-password {token} --headless'
+		]
+		print(f'Marimo: command: {result}')
 		return result
 
 	return {
